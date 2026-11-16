@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="512" viewBox="0 0 720 512">
+<rect x="1" y="1" width="718" height="510" rx="10" fill="#2e2b26" stroke="#4f4a41" stroke-width="2"/>
+<text x="360" y="34" font-size="18" fill="#ece7db" text-anchor="middle" font-weight="bold" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">HTTPメッセージとパケット ── 層の積み重ね</text>
+<rect x="150" y="56" width="420" height="184" rx="8" fill="#3b372f" stroke="#6b6456" stroke-width="1.5"/>
+<text x="166" y="82" font-size="14" fill="#ece7db" text-anchor="start" font-weight="bold" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">HTTP メッセージ（1通のテキスト）</text>
+<text x="166" y="108" font-size="14" fill="#ece7db" text-anchor="start" font-family="Consolas,'Courier New',monospace">POST /v1/summarize HTTP/1.1</text>
+<text x="166" y="130" font-size="14" fill="#ffcf7a" text-anchor="start" font-weight="bold" font-family="Consolas,'Courier New',monospace">Authorization: Bearer eyJ...</text>
+<text x="166" y="152" font-size="14" fill="#b0a996" text-anchor="start" font-family="Consolas,'Courier New',monospace">Content-Type: application/json</text>
+<line x1="166" y1="164" x2="554" y2="164" stroke="#6b6456" stroke-width="1.5" stroke-dasharray="5 5"/>
+<text x="166" y="180" font-size="13" fill="#b0a996" text-anchor="start" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">（空行＝ヘッダの終わり）</text>
+<text x="166" y="206" font-size="14" fill="#8fe0b0" text-anchor="start" font-family="Consolas,'Courier New',monospace">{ "feature": "summarize", ... }</text>
+<text x="138" y="112" font-size="13" fill="#b0a996" text-anchor="end" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">開始行</text>
+<text x="138" y="126" font-size="13" fill="#b0a996" text-anchor="end" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">ヘッダ</text>
+<text x="138" y="142" font-size="13" fill="#b0a996" text-anchor="end" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">（キー:値の表）</text>
+<text x="138" y="210" font-size="13" fill="#b0a996" text-anchor="end" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">ボディ</text>
+<text x="578" y="122" font-size="13" fill="#ffcf7a" text-anchor="start" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">Authorization は</text>
+<text x="578" y="138" font-size="13" fill="#ffcf7a" text-anchor="start" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">ヘッダ表の1行</text>
+<line x1="360" y1="244" x2="360" y2="262" stroke="#ffcf7a" stroke-width="2.5"/>
+<polygon points="360,276 353,262 367,262" fill="#ffcf7a" stroke="none" stroke-width="1.5"/>
+<text x="376" y="262" font-size="14" fill="#ffcf7a" text-anchor="start" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">① TLS が1通を丸ごと暗号化（https）</text>
+<rect x="220" y="280" width="280" height="46" rx="8" fill="#26241f" stroke="#6b6456" stroke-width="1.5"/>
+<text x="360" y="308" font-size="14" fill="#ece7db" text-anchor="middle" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">暗号化された塊（中身は読めない）</text>
+<line x1="360" y1="330" x2="360" y2="348" stroke="#ffcf7a" stroke-width="2.5"/>
+<polygon points="360,362 353,348 367,348" fill="#ffcf7a" stroke="none" stroke-width="1.5"/>
+<text x="376" y="348" font-size="14" fill="#ffcf7a" text-anchor="start" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">② TCP が分割し、IP がパケットで運ぶ</text>
+<rect x="36" y="366" width="48" height="58" rx="8" fill="#3b372f" stroke="#6b6456" stroke-width="1.5"/>
+<text x="60" y="399" font-size="13" fill="#b0a996" text-anchor="middle" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">IP</text>
+<rect x="84" y="366" width="52" height="58" rx="8" fill="#3b372f" stroke="#6b6456" stroke-width="1.5"/>
+<text x="110" y="399" font-size="13" fill="#b0a996" text-anchor="middle" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">TCP</text>
+<rect x="136" y="366" width="104" height="58" rx="8" fill="#26241f" stroke="#ffcf7a" stroke-width="1.5"/>
+<text x="188" y="399" font-size="13" fill="#ece7db" text-anchor="middle" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">暗号化断片①</text>
+<rect x="258" y="366" width="48" height="58" rx="8" fill="#3b372f" stroke="#6b6456" stroke-width="1.5"/>
+<text x="282" y="399" font-size="13" fill="#b0a996" text-anchor="middle" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">IP</text>
+<rect x="306" y="366" width="52" height="58" rx="8" fill="#3b372f" stroke="#6b6456" stroke-width="1.5"/>
+<text x="332" y="399" font-size="13" fill="#b0a996" text-anchor="middle" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">TCP</text>
+<rect x="358" y="366" width="104" height="58" rx="8" fill="#26241f" stroke="#ffcf7a" stroke-width="1.5"/>
+<text x="410" y="399" font-size="13" fill="#ece7db" text-anchor="middle" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">暗号化断片②</text>
+<rect x="480" y="366" width="48" height="58" rx="8" fill="#3b372f" stroke="#6b6456" stroke-width="1.5"/>
+<text x="504" y="399" font-size="13" fill="#b0a996" text-anchor="middle" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">IP</text>
+<rect x="528" y="366" width="52" height="58" rx="8" fill="#3b372f" stroke="#6b6456" stroke-width="1.5"/>
+<text x="554" y="399" font-size="13" fill="#b0a996" text-anchor="middle" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">TCP</text>
+<rect x="580" y="366" width="104" height="58" rx="8" fill="#26241f" stroke="#ffcf7a" stroke-width="1.5"/>
+<text x="632" y="399" font-size="13" fill="#ece7db" text-anchor="middle" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">暗号化断片③</text>
+<text x="360" y="456" font-size="14" fill="#b0a996" text-anchor="middle" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">経路（パケット）から見えるのは IP・TCP のヘッダまで。</text>
+<text x="360" y="480" font-size="14" fill="#ece7db" text-anchor="middle" font-family="'Yu Gothic','Yu Gothic UI','Meiryo','MS Gothic',sans-serif">HTTP のヘッダ（Authorization など）は ① の内側＝経路からは読めない。</text>
+</svg>
