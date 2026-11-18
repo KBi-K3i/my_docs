@@ -26,7 +26,7 @@ litellm は db(Postgres=台帳) と redis(状態共有・spendバッファ) を�
 | `.env.example` | 全キーに初期値入りの雛形（これを写して `.env` を作る＝設定もれ防止。実値が要るのはプロバイダ節だけ。`.env` 自体はコミットせずスナップショットにも含めない） |
 | `secrets/` | 認証ファイルの置き場（コミットしない。litellm が読み取り専用で参照） |
 | `src/ai_api_gateway/main.py` | gateway 仮実装（LiteLLM へ中継・学習で書き換える前提） |
-| `web/` | web 仮実装（最小のリクエスト画面・AIボタン＝gateway を fetch）。4ファイル分割＝`app.py`（配信）・`templates/index.html`（構造）・`static/style.css`（見た目）・`static/app.js`（挙動） |
+| `web/` | web 仮実装（最小のリクエスト画面・AIボタン＝gateway を fetch・利用者ID・仮想キー・同時リクエスト数の入力欄つき）。4ファイル分割＝`app.py`（配信）・`templates/index.html`（構造）・`static/style.css`（見た目）・`static/app.js`（挙動） |
 
 ## 起動
 
