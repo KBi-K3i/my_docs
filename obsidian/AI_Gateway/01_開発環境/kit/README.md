@@ -10,6 +10,7 @@
 |---|---|
 | `devcontainer/` の中身 | `.devcontainer/` へ（フォルダ名の先頭に `.` を付ける） |
 | `repo-root/` の中身 | リポジトリ直下へ |
+| `vm/` の中身 | リポジトリ外＝**VM ホストで実行するスクリプト**（配置不要・VM へ持ち込んで `sudo bash` で実行） |
 
 パッケージ名は `ai_gateway`（`src/ai_gateway/`）を仮置きしている。実プロジェクトの名前に合わせて compose の `command:`（`ai_gateway.main:app`）を読み替える。
 
@@ -40,3 +41,4 @@ cd .devcontainer && docker-compose -f compose.yaml -f compose.dev.yaml up -d --b
 - **gateway/web の `command:` 自走は、`main:app`（FastAPI）と `web/app.py`（Flask）の実装後に生きる**。実装前は③（sleep待機）で上げ、`exec` で入って作業する。
 - `.env` は `.env.example` を複製して各自が作る（コミットしない）。`.gitignore` に `.env` を入れる場合、`.env.*` のようなパターンは `.env.example` まで無視するので `!.env.example` の除外行を足す。
 - Redis の機能有効化は `repo-root/litellm_config.yaml` のコメントを外し、`.env` の `REDIS_*` を設定する（手順＝同ドキュメント §5.1.4）。撤去は逆に消すだけ。
+- **前段の httpd（リバースプロキシ／TLS終端）はコンテナ外＝VM ホストの仕事**。`vm/setup-apache.sh` で一発構築できる（手順と設計＝[Apache リバースプロキシ設定](../02_Apacheリバースプロキシ設定.md)）。
