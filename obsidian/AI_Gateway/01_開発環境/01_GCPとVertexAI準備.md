@@ -1,6 +1,6 @@
 # ③ GCP / Vertex AI 準備 ── モックの右端を「本物のGemini」に差し替える
 
-*個人検討ノートの一般化版（2026-11-16 同期・正は個人 Vault）*
+*個人検討ノートの一般化版（2026-11-18 同期・正は個人 Vault）*
 
 > [!NOTE]
 > **このノートの位置づけ**
@@ -15,8 +15,8 @@
 | §3.1〜3.2 | ① アカウント／② プロジェクト作成 | 【やる】 | 済 |
 | §3.3 | ③ Vertex AI API 有効化 | 【やる】 | 済 |
 | §3.4〜3.5 | ④ SA作成／⑤ ロール付与 | 【やる】 | 済 |
-| §3.6 | ⑥ APIキー（資格情報）の発行＝○ADC | 【やる】 | **次はここ**＝実施は [② 環境構築手順](./00_環境構築手順.md) §5.4（構築後手順） |
-| §3.6.3〜3.6.4 | △ 鍵JSON／お試しキー2種 | 【紹介のみ】 | やらない |
+| §3.6 | ⑥ APIキー（資格情報）の発行＝認証JSONを `secrets/` へ | 【やる】 | **次はここ**＝実施は各キットの手順書.md（[環境構築キット](./kit/README.md)）・設計は [② 環境構築手順](./00_環境構築手順.md) §5.4 |
+| §3.6.3〜3.6.4 | △ 鍵JSON（配布時のみ）／お試しキー2種 | 【紹介のみ】 | 自分では作らない |
 | §3.7 | ⑦ LiteLLM 設定 | 【やる】 | これから |
 | §3.8 | ⑧ 疎通確認 | 【やる】 | 直叩きは済・LiteLLM経由はこれから |
 | §2.2・§4 | APIキー系統の全体像／Express 案・無料枠 | 【紹介のみ】 | 使わなかった（本番ルートで直行） |
@@ -127,12 +127,12 @@ GUI での確認は、つまずきが3つある（すべて筆者の実測・202
 
 #### 3.6.1 概要 ── 方式は4つ・○ADC だけやる（△は紹介のみ）
 
-発行の方式は4つある。本プロジェクトは **○ADC（鍵レス）** を採用する。秘密ファイルを生まず、Google 自身が鍵JSONをリスクと明言しているためだ[^adc-risk]。残り3つは △紹介のみ＝やらない。
+発行の方式は4つある。本プロジェクトの既定は **○ADC** である——長期有効な鍵ファイルを自分から増やさず、Google 自身が鍵JSONをリスクと明言しているためだ[^adc-risk]。ただしスタック側の受け口は「認証JSONを `secrets/` に置き、`.env` の `GOOGLE_APPLICATION_CREDENTIALS=/secrets/<ファイル名>` で指す」で統一してあり（[② 環境構築手順](./00_環境構築手順.md) §5.4.1）、職場で鍵JSONが配布される場合はそれを置くだけでも同じ形で動く。残り2つのお試しキーは △紹介のみ＝やらない。
 
 | 方式 | 採否 | ひとこと |
 |---|---|---|
-| ADC（鍵レス） | **○ 採用** | ローカルのログインをそのまま資格情報にする（§3.6.2） |
-| サービスアカウント鍵JSON | △ 紹介のみ | 「本番のAPIキー発行」の正体だが非推奨（§3.6.3） |
+| ADC（鍵レス） | **○ 採用（既定）** | ログインで作る認証ファイルを `secrets/` に置く（§3.6.2） |
+| サービスアカウント鍵JSON | △ 配布されたときだけ | 「本番のAPIキー発行」の正体。自分では作らない・配布鍵は `secrets/` へ（§3.6.3） |
 | Vertex Express mode キー（`AQ.`） | △ 紹介のみ | お試し用。§4 の当初案ごと使わなかった（§3.6.4） |
 | AI Studio の Gemini キー（`AIza…`） | △ 紹介のみ | 窓口が別の Gemini Developer API 用（§3.6.4） |
 
@@ -146,7 +146,7 @@ gcloud auth application-default login
 
 これを一度通すと、LiteLLM を含む Google のクライアントライブラリが、**環境変数や鍵ファイルの指定なしに自動でその資格情報を見つけて**認証する（ADC は決まった場所を順に探す仕組み）[^adc-local]。認証処理はアプリのコードに1行も書かない——これが ADC の設計思想である。
 
-**実施の順路（gcloud 導入 → ログイン → コンテナへのマウント → 疎通）は、コンテナが立ってから行う作業**なので、[② 環境構築手順](./00_環境構築手順.md) **§5.4（構築後手順）**に置いた。本ノートが持つのは選定（§3.6.1）と考え方だけ。
+**ホストに gcloud CLI は導入しない**（2026-11-18 改訂＝職場ではホストへのツール導入自体が難しい、という前提に合わせた）。上のログインは、compose に同梱した公式イメージのワンショットコンテナ（`docker compose run --rm gcloud`）の中で行い、できた認証ファイルを `secrets/` に直接書き出す。あとは `.env` の `GOOGLE_APPLICATION_CREDENTIALS=/secrets/<ファイル名>` が指すだけで、鍵JSONを置いた場合と同じ形になる。設計の背景は [② 環境構築手順](./00_環境構築手順.md) §5.4.1 と [解説07 認証設計](../05_論点解説/07_認証設計（プロバイダ非依存とGCP疎通の考え方）.md)、実行の順路は各キットの手順書.md に一本化した。本ノートが持つのは選定（§3.6.1）と考え方だけ。
 
 なお `login` 単体では**自分（ログインした人間ユーザー）の資格情報**になり、④⑤で作った SA は使われない。SA の権限で動かす鍵レスの方法が**なりすまし（impersonation）**＝`gcloud auth application-default login --impersonate-service-account=<SAメール>`（実行するユーザーアカウントに Service Account Token Creator ロールが要る。フラグの存在は公式リファレンスで確認済み・2026-11-16）。方針＝**まず自分のユーザー資格情報の ADC で点灯 → SA なりすましへ格上げ**の二段とする（採否と詳細手順は実施時に公式リファレンスで確認のうえ確定する）。
 
@@ -156,7 +156,7 @@ gcloud auth application-default login
 
 続行した場合の記録（無害）：保存先は `/tmp/…` で、Cloud Shell で永続するのは `$HOME`（5GB）だけなので ADC ごと消える[^cloudshell-disk]。途中で促される `cloudresourcemanager.googleapis.com` の有効化だけはプロジェクトに残る。quota project（課金・クォータの計上先）も ADC に書かれるが、一緒に消える。
 
-本番はローカルに gcloud CLI を導入してから実行する。保存先は `$HOME/.config/gcloud/` 配下になり永続する[^adc-local]。
+ローカルで作る場合も、ホストに gcloud は入れず、同梱のワンショットコンテナ内で実行して `secrets/` に書き出す（§3.6.2）。参考までに、素の gcloud をホストに導入した場合の既定の保存先は `$HOME/.config/gcloud/` 配下である[^adc-local]。
 
 #### 3.6.3 △ 参考：サービスアカウント鍵JSON ── 「本番のAPIキー発行」の正体
 
@@ -167,7 +167,7 @@ gcloud iam service-accounts keys create key.json \
   --iam-account=SERVICE_ACCOUNT_NAME@PROJECT_ID.iam.gserviceaccount.com
 ```
 
-この `key.json` は**パスワードそのもの**に等しい。Google 自身が「サービスアカウント鍵はセキュリティリスクで、推奨されない」と警告している[^adc-risk]。だから本プロジェクトでは作らない。もし使う場合は §5 の秘密ハンドリングを厳守する。
+この `key.json` は**パスワードそのもの**に等しい。Google 自身が「サービスアカウント鍵はセキュリティリスクで、推奨されない」と警告している[^adc-risk]。だから本プロジェクトでは自分からは作らない。職場から配布された鍵を使う場合は `secrets/` に置き、§5 の秘密ハンドリングを厳守する。
 
 #### 3.6.4 △ 参考：お試し用APIキー2種 ── `AQ.` と `AIza…` の見分け
 
@@ -192,10 +192,10 @@ model_list:
       model: vertex_ai/gemini-3.8-flash # ← 実モデル名（2026-11-16 時点の現行 Flash。使用時に再確認）
       vertex_project: "PROJECT_ID"      # ← ②で控えたプロジェクトID
       vertex_location: "global"         # ← 現行世代の提供ロケーション（§3.7.1）
-      vertex_credentials: "/path/to/key.json"  # ← 参考：鍵JSON運用時のみ（§3.6.3）。ADCなら省略
+      # vertex_credentials: "/path/to/key.json"  # ← 参考：直書きする場合のみ。本プロジェクトは GOOGLE_APPLICATION_CREDENTIALS に統一＝書かない
 ```
 
-ここで効くのが**論理名**の考え方だ。ゲートウェイのコードは `default-llm` という**論理名**だけを握り、それが Vertex のどのモデルに結びつくかは**この設定ファイルだけ**が知る。だからモデルを替えてもゲートウェイは無改修で済む。**ADC（§3.6.2）を使うなら `vertex_credentials` の行は省ける**（LiteLLM が ADC を自動で拾う）。鍵JSONを使う場合は `vertex_credentials` にパスを書くか、環境変数 `GOOGLE_APPLICATION_CREDENTIALS` に鍵のパスを入れておく[^litellm][^adc-risk]。
+ここで効くのが**論理名**の考え方だ。ゲートウェイのコードは `default-llm` という**論理名**だけを握り、それが Vertex のどのモデルに結びつくかは**この設定ファイルだけ**が知る。だからモデルを替えてもゲートウェイは無改修で済む。**本プロジェクトは `vertex_credentials` を書かず、環境変数 `GOOGLE_APPLICATION_CREDENTIALS` に統一した**——`secrets/` に置いた認証JSON（ADC でも鍵JSONでも）をこの変数で指せば、LiteLLM がそのまま拾う[^litellm][^adc-risk]（受け口の設計＝[② 環境構築手順](./00_環境構築手順.md) §5.4.1）。
 
 #### 3.7.1 モデル名とロケーションは"生もの"
 
@@ -269,12 +269,12 @@ gcloud billing projects describe PROJECT_ID
 
 ## 5. 秘密（クレデンシャル）の扱い
 
-認証が通ると、こんどは**秘密をどこに置くか**が問題になる。原則はひとつ——**秘密は `.env` に出し、`config.yaml`・コード・git・コンテナイメージには直書き・同梱しない**。鍵JSONはファイルを安全な場所に置き、**環境変数でそのパスを指す**（ファイルの中身を設定に貼らない）。そして `.env` と鍵JSON は、**`.gitignore` と `.dockerignore` の両方**に入れて、リポジトリにもイメージにも入り込まないようにする（片方だけだと、git には載らないがイメージには焼き込まれる、という漏れが起きる）。Google 自身が、ダウンロードした鍵ファイルは漏れたら追加情報なしで悪用され得るリスクだと明言している[^adc-risk]ので、可能なら鍵ファイルを作らない **ADC を既定**にするのが最も安全である。
+認証が通ると、こんどは**秘密をどこに置くか**が問題になる。原則はひとつ——**秘密は `.env` に出し、`config.yaml`・コード・git・コンテナイメージには直書き・同梱しない**。鍵JSONや ADC の認証ファイルは `secrets/` フォルダに置き、**環境変数でそのパスを指す**（ファイルの中身を設定に貼らない）。そして `.env` と `secrets/` の中身は、**`.gitignore` と `.dockerignore` の両方**に入れて、リポジトリにもイメージにも入り込まないようにする（片方だけだと、git には載らないがイメージには焼き込まれる、という漏れが起きる）。Google 自身が、ダウンロードした鍵ファイルは漏れたら追加情報なしで悪用され得るリスクだと明言している[^adc-risk]ので、長期有効な鍵ファイルを自分から作らない **ADC を既定**にする。ただし ADC の認証ファイルも秘密そのものなので、扱いは鍵JSONと同じにする。
 
 | 秘密 | 置き場所 | 参照方法 | git/image |
 |---|---|---|---|
-| Vertex SA鍵JSON | ホストの安全なパス（コンテナにはマウント） | `GOOGLE_APPLICATION_CREDENTIALS=パス` ／ LiteLLM `vertex_credentials` | gitignore＋dockerignore |
-| ADC（最安全・学習既定） | `gcloud auth application-default login` | 自動（鍵ファイル不要） | 秘密ファイルを作らない |
+| Vertex SA鍵JSON | `secrets/`（litellm に読み取り専用マウント） | `.env` の `GOOGLE_APPLICATION_CREDENTIALS=/secrets/<ファイル名>` | secrets/ の中身は gitignore＋dockerignore |
+| ADC（鍵レス・学習既定） | `secrets/`（同梱のワンショット gcloud が生成） | 同上 | 同上 |
 | Express modeキー（`AQ.`） | `.env` の `VERTEX_API_KEY` | LiteLLM／直叩き | `.env` は gitignore |
 | LiteLLM master key | `.env` の `LITELLM_MASTER_KEY` | config.yaml で `os.environ/...` 参照 | 同上 |
 

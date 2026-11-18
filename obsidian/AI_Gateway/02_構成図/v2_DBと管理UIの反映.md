@@ -84,7 +84,7 @@ flowchart TD
 			subgraph gw_app["利用管理アプリケーション"]
 			
 				gw_if["GWインターフェース<br>（FastAPI）"]
-				proxy_if["プロキシ用インタフェース"]
+				proxy_if["プロキシ用インターフェース"]
 				psql_protocol_1["PostgreSQL プロトコル"]
 			
 				subgraph judgment["状態判定"]

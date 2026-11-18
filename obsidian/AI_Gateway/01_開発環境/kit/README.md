@@ -1,64 +1,36 @@
-# 環境構築キット ── 1台版（お試し）／2台版（開発の本命）／4台版（運用サンプル）
+# 環境構築キット ── LiteLLM_x1（お試し）／LiteLLM_x2（開発の本命）／LiteLLM_x4（運用サンプル）
 
 *個人側の実リポジトリから書き出した配布用コピー（2026-11-18 同期・正は個人 Vault）*
 
-[開発環境構築ドキュメント](../00_環境構築手順.md) §4〜§5 の設計を、そのまま使えるファイルにしたキット。規模×Redis の組み合わせは次のとおり（2026-11-18 方針）。
+[開発環境構築ドキュメント](../00_環境構築手順.md) §4〜§5 の設計を、そのまま使えるファイルにしたキット。2026-11-18 に、規模別の**フォルダ単位で自己完結する形**へ再編した。使うフォルダを1つ選んで丸ごとコピーすれば、ほかのフォルダを見る必要はない。
 
-| 版 | Redisなし | Redisあり | 開発モード（sleep待機） |
-|---|---|---|---|
-| **1台版**（お試し・最低限の成果） | `devcontainer/compose.single.yaml`（これのみ＝Redis不要） | — | — |
-| **2台版**（**開発の本命**） | `devcontainer/compose.x2-noredis.yaml`（比較・段階導入用） | `devcontainer/compose.yaml`＝既定 | `compose.yaml`＋`compose.dev.yaml` |
-| **4台版**（将来サイジングの運用サンプル） | `deploy/compose.noredis.yaml` | `deploy/compose.yaml` | — |
+## 1. キット一覧
 
-起動コマンド（`.devcontainer/` で実行。4台版のみ `deploy/` で）：
+| キット | 規模 | Redis | 内部LB | 用途 |
+|---|---|---|---|---|
+| [LiteLLM_x1/](LiteLLM_x1/) | litellm×1 | なし | なし | お試し・スモールスタート（最小で始めて学ぶ） |
+| [LiteLLM_x2/](LiteLLM_x2/) | litellm×2 | あり | あり（nginx） | **開発の本命（既定）**＝複数インスタンス＋Redis共有の最小形 |
+| [LiteLLM_x4/](LiteLLM_x4/) | litellm×4 | あり | あり（nginx） | 将来サイジングに備えた運用サンプル |
 
-```bash
-docker-compose up -d --build
-```
+どのフォルダにも同じ顔ぶれが入っている。compose・Dockerfile・`litellm_config.yaml`・`.env.example`・`secrets/`（認証ファイルの置き場）・`src/`（FastAPI ゲートウェイの仮実装）・`web/`（最小リクエスト画面＝Flask 1画面）・**手順書.md** である。手順書は1ファイル完結で、やることと確認だけを並べてある——選んだフォルダの手順書だけ読めば、起動から疎通まで足りる。`.env.example` には**全キーにラボでそのまま動くダミー初期値**を入れてあり、設定もれで起動に失敗しない（実値が要るのはプロバイダ節だけ。`LITELLM_SALT_KEY` は一度 DB に保存が始まったら変えない）。
 
-```bash
-docker-compose -f compose.single.yaml up -d --build
-```
+認証は全キット共通でプロバイダ非依存＝スタックが依存するのは `.env` と `secrets/` だけである（Vertex AI なら認証JSONを `secrets/` に置いて `.env` で指す。考え方＝[解説07 認証設計](../../05_論点解説/07_認証設計（プロバイダ非依存とGCP疎通の考え方）.md)）。
 
-```bash
-docker-compose -f compose.x2-noredis.yaml up -d --build
-```
+## 2. 設計の指針 ── どの規模を選ぶか（判断材料）
 
-```bash
-cd deploy && docker-compose up -d --build
-```
+結論を先に言えば、迷ったら x2 を使う。3つの違いは「何を学び・何を確かめたいか」にある。
 
-```bash
-docker-compose -f compose.yaml -f compose.dev.yaml up -d --build
-```
+**x1 はスモールスタート**である。サービス数が最少（Redisなし・LBなし）で、1つずつの役割を目で追いやすい。LiteLLM と LLM の鎖を初めて通す・構成の仕組みを学ぶ・とにかく軽く試す、という段に向く。
 
-## config は2枚＝ファイルで切替（編集不要）
+**x2 は現実解**である。複数インスタンス＋Redis共有＋LB という「本番と同じ性質」を、最小のコスト（2台）で再現する。レート制限・予算カウンタをインスタンス間で共有する挙動や、LB 越しの振り分けは、2台あって初めて観察できる。1台ぎりぎりの設計で始めると、この性質の検証があとから作り直しになる。YAGNI（必要になるまで作らない）で始めつつ将来性を欠かない最小形がここなので、開発の既定を x2 に置いた。
 
-| ファイル | 中身 | 使う compose |
-|---|---|---|
-| `repo-root/litellm_config.yaml` | **Redisなし・既定** | 1台版・各 noredis 版 |
-| `repo-root/litellm_config.redis.yaml` | **Redis 3点セット有効** | 2台版あり・4台版あり |
+**x4 は理想形のサンプル**である。利用者約1,300人・ピーク約1,000req/s級の帯に備える形で、いま常用するものではない。x2 から x4 への台数変更が「litellm サービスの複製（YAMLアンカー）＋LB設定の `server` 行の追加」だけで済む構造の見本として置いてある。スケーリングの実測値は [LiteLLM公式ベンチマーク（和訳）](../../05_論点解説/06_LiteLLM公式ベンチマーク（和訳）.md) にまとめた。
 
-> [!NOTE]
-> **noredis 版の注意**：公式の線引きは「ワーカープロセスが2つ以上なら Redis」。2台/4台の noredis 版では、レート制限・予算カウンタがインスタンスごとに別勘定（実効値が台数倍）になる。挙動比較・段階導入の学習用であり、複数台の常用は Redisあり版にする。
+## 3. 付属フォルダ（viewer/・vm/）
 
-## 配置方法
+- [viewer/](viewer/README.md) ── **閲覧者（ドキュメントを読むだけの人）向け**。`extensions.json` をリポジトリの `.vscode/` にコミット同梱すると、clone して開くだけで推奨拡張の一括導入が案内される。詳細＝viewer/README。
+- vm/ ── 前段の httpd（リバースプロキシ／TLS終端）は**コンテナ外＝VM ホストの仕事**。`vm/setup-apache.sh` を VM ホストで `sudo bash` 実行すると一発構築できる（[Apache リバースプロキシ設定](../02_Apacheリバースプロキシ設定.md)）。
 
-| このフォルダ | リポジトリでの置き場所 |
-|---|---|
-| `devcontainer/` の中身 | `.devcontainer/` へ（フォルダ名の先頭に `.` を付ける） |
-| `repo-root/` の中身 | リポジトリ直下へ（config 2枚・`litellm_lb.conf`＝2台用・`.env.example`） |
-| `deploy/` | リポジトリ直下へフォルダごと（4台版 compose 2枚＋4台用 `litellm_lb.conf`） |
-| `vm/` の中身 | リポジトリ外＝**VM ホストで実行するスクリプト**（`sudo bash` で実行・[Apache設定](../02_Apacheリバースプロキシ設定.md)） |
-| `viewer/` | **閲覧者向け**＝`extensions.json` をリポジトリの `.vscode/` にコミット同梱（clone して開くだけで推奨拡張が入る）。詳細＝[viewer/README](viewer/README.md) |
+## 4. 動作確認済みスナップショット（20261118/）
 
-パッケージ名は `ai_gateway`（`src/ai_gateway/`）を仮置きしている。実プロジェクトの名前に合わせて compose の `command:` を読み替える。
-
-## 注意
-
-- **gateway/web の `command:` 自走は、`main:app`（FastAPI）と `web/app.py`（Flask）の実装後に生きる**。実装前は開発モード（sleep 待機）で上げて作業する。
-- GW からの LiteLLM 接続先は、複数版＝**`http://litellm-lb:4000`**・1台版＝**`http://litellm:4000`**。★実装では接続先を `.env` で外出しにすると、規模の切替がアプリ無改修になる。
-- Redisあり版は `.env` に `REDIS_HOST=redis`・`REDIS_PORT=6379` を入れる。
-- **台数を変える**ときは、compose の `litellm-N` サービス（YAMLアンカー `*litellm` の行）と `litellm_lb.conf` の `server` 行を同数にするだけ。
-- `.env` は `.env.example` を複製して各自が作る（コミットしない）。`.gitignore` の `.env.*` パターンには `!.env.example` の除外行を足す。
-- **前段の httpd（リバースプロキシ／TLS終端）はコンテナ外＝VM ホストの仕事**。`vm/setup-apache.sh` で一発構築できる。GCP との疎通は [GCP疎通確認（1台版）](../03_GCP疎通確認（1台版）.md)。
+リポジトリ直下の [20261118/](../../20261118/README.md) は、2026-11-18 に実機で動作確認した litellm×2＋Redis 構成の丸ごとスナップショットである（全サービス healthy・gateway→LB→litellm→プロバイダ段までの疎通を確認）。キットの x2 と対応する「動く実例」として、設定値の見比べに使える。
