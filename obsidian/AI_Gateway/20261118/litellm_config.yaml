@@ -1,0 +1,18 @@
+# LiteLLM Proxy 設定（Redis有効版・この構成はこの1枚のみ）
+model_list:
+  - model_name: gemini                      # ゲートウェイが呼ぶ論理名
+    litellm_params:
+      model: vertex_ai/gemini-3.8-flash     # 実モデル（2026-11-16 時点の現行。使用時に公式ドキュメントで再確認）
+      vertex_project: os.environ/VERTEX_PROJECT
+      vertex_location: global               # 現行世代の提供ロケーション（使用時に再確認）
+      # 認証は GOOGLE_APPLICATION_CREDENTIALS（compose が ADC を指す）に任せる＝鍵JSON不要
+
+router_settings:
+  routing_strategy: simple-shuffle
+  redis_host: os.environ/REDIS_HOST
+  redis_port: os.environ/REDIS_PORT
+  # redis_password: os.environ/REDIS_PASSWORD   # ラボは内部NW専用なので未設定（本番では必須）
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY  # 管理APIの認可キー（.env 参照）
+  use_redis_transaction_buffer: true         # spend更新をRedisにキューし、ロック保持の1台がDBへ一括書き込み
