@@ -1,7 +1,7 @@
-# compose Redisなし版（4サービス）＝redis を使わない運用のための独立ファイル
-# 起動: docker-compose -f compose.noredis.yaml up -d --build
+# compose 1台版（お試し・Redisなし・4サービス）＝最低限の成果用
+# 起動: docker-compose -f compose.single.yaml up -d --build
 # 本体（compose.yaml）との差分: redis サービスと litellm の depends_on.redis が無いだけ
-# 設計の正典: 開発環境構築ドキュメント §5.1.4（撤去＝消すだけ、の形をファイルとして固定したもの）
+# 正典: Vault「環境構築手順」§5.1.4（撤去＝消すだけ、の形をファイルとして固定したもの）
 services:
   gateway:                         # 主軸（FastAPI/Python）
     build:
@@ -22,7 +22,7 @@ services:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
       - UV_LINK_MODE=copy
-    # 自走コマンド。src/ai_gateway/main.py の app が実装されてから有効に動く（パッケージ名は各自読み替え）
+    # 自走コマンド。src/ai_gateway/main.py の app が実装されてから有効に動く
     command: ["uv", "run", "uvicorn", "ai_gateway.main:app", "--host", "0.0.0.0", "--port", "8000"]
     depends_on:
       litellm:

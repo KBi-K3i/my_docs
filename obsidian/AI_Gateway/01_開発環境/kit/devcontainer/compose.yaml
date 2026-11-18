@@ -1,9 +1,10 @@
-# compose 本体（Redisあり・5サービス）＝単体で docker-compose up -d できる完成形
-# 開発（sleep待機）で上げるときは compose.dev.yaml を重ねる:
-#   docker-compose -f compose.yaml -f compose.dev.yaml up -d --build
-# 設計の正典: 開発環境構築ドキュメント §5.1（kit/README.md も参照）
+# compose 開発既定（複数インスタンス版）＝litellm×2＋内部LB（nginx）＋Redis有効化（構成図v3の形）
+# 2026-11-18 方針: 開発時点から複数構成＝本番との再現性を優先。1台版は compose.single.yaml（お試し）に温存
+# 起動:   docker-compose up -d --build
+# 開発:   docker-compose -f compose.yaml -f compose.dev.yaml up -d --build
+# 前提:   litellm_lb.conf をリポジトリ直下に置く／litellm_config.redis.yaml（Redis有効版）を使う／.env に REDIS_HOST=redis・REDIS_PORT=6379
 services:
-  gateway:                         # 主軸（FastAPI/Python）
+  gateway:                         # 主軸（FastAPI/Python）。LiteLLM への接続先は http://litellm-lb:4000（★実装で .env 外出しに）
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
@@ -22,13 +23,16 @@ services:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
       - UV_LINK_MODE=copy
-    # 自走コマンド。src/ai_gateway/main.py の app が実装されてから有効に動く（パッケージ名は各自読み替え）
     command: ["uv", "run", "uvicorn", "ai_gateway.main:app", "--host", "0.0.0.0", "--port", "8000"]
     depends_on:
-      litellm:
+      litellm-1:
         condition: service_healthy
+      litellm-2:
+        condition: service_healthy
+      litellm-lb:
+        condition: service_started
 
-  web:                             # Flask＝ノートアプリ（ノート配信/保存・SQLite）
+  web:                             # Flask＝ノートアプリ（1台版と同じ）
     build:
       context: ..
       dockerfile: .devcontainer/Dockerfile
@@ -39,18 +43,24 @@ services:
     env_file:
       - ../.env
     ports: ["5000:5000"]
-    # 自走コマンド。web/app.py の app が実装されてから有効に動く
     command: ["uv", "run", "flask", "--app", "app", "run", "--host", "0.0.0.0", "--port", "5000"]
     depends_on:
       - gateway
 
-  litellm:                         # LiteLLM Proxy＝OpenAI互換の窓口（公式イメージ）
+  litellm-lb:                      # 内部ロードバランサ（構成図v3の「負荷分散」）
+    image: docker.io/library/nginx:alpine
+    volumes: ["../litellm_lb.conf:/etc/nginx/conf.d/default.conf:ro,Z"]
+    ports: ["4000:4000"]           # 管理UIもLB越しに http://localhost:4000/ui で届く
+    depends_on:
+      - litellm-1
+      - litellm-2
+
+  litellm-1: &litellm              # LiteLLM インスタンス（ports公開なし＝入口はLBだけ）
     image: ghcr.io/berriai/litellm:main-latest
     command: ["--config", "/app/config.yaml"]
-    volumes: ["../litellm_config.yaml:/app/config.yaml:Z"]
+    volumes: ["../litellm_config.redis.yaml:/app/config.yaml:Z"]
     env_file:
-      - ../.env                    # DATABASE_URL・LITELLM_SALT_KEY もここから渡る
-    ports: ["4000:4000"]
+      - ../.env
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness')"]
       interval: 30s
@@ -59,11 +69,13 @@ services:
       start_period: 30s
     depends_on:
       db:
-        condition: service_healthy # db の pg_isready が通ってから起動
+        condition: service_healthy
       redis:
-        condition: service_healthy # redis の ping が通ってから起動（redis撤去時はこの2行も消す）
+        condition: service_healthy
 
-  db:                              # LiteLLM の台帳（仮想キー・spend）用 Postgres
+  litellm-2: *litellm              # YAMLアンカーで同一定義を複製（台数を足すときはここと litellm_lb.conf を同数に）
+
+  db:                              # LiteLLM の台帳（全インスタンスで共有）
     image: postgres:16
     environment:
       - POSTGRES_USER=litellm
@@ -78,14 +90,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  redis:                           # LiteLLM の状態共有・spendバッファ（箱は先・機能は後）
-    image: redis:7                 # 公式要件「Redis 7.0 or newer」
+  redis:                           # 状態共有・spendバッファ（複数インスタンスでは必須＝有効化済み）
+    image: redis:7
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
-                                   # ports も volumes も書かない＝内部NW専用・状態は消えてよい（撤去容易）
 
 volumes:
   postgres_data:                   # 台帳の永続化（消えると鍵の発行からやり直し）
