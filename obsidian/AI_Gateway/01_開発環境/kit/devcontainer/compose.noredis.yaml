@@ -1,0 +1,80 @@
+# compose Redisなし版（4サービス）＝redis を使わない運用のための独立ファイル
+# 起動: docker-compose -f compose.noredis.yaml up -d --build
+# 本体（compose.yaml）との差分: redis サービスと litellm の depends_on.redis が無いだけ
+# 設計の正典: 開発環境構築ドキュメント §5.1.4（撤去＝消すだけ、の形をファイルとして固定したもの）
+services:
+  gateway:                         # 主軸（FastAPI/Python）
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    init: true
+    env_file:
+      - ../.env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ..:/workspace:Z
+    working_dir: /workspace
+    environment:
+      - TZ=Asia/Tokyo
+      - LANG=ja_JP.UTF-8
+      - LC_ALL=ja_JP.UTF-8
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - UV_LINK_MODE=copy
+    # 自走コマンド。src/ai_gateway/main.py の app が実装されてから有効に動く（パッケージ名は各自読み替え）
+    command: ["uv", "run", "uvicorn", "ai_gateway.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    depends_on:
+      litellm:
+        condition: service_healthy
+
+  web:                             # Flask＝ノートアプリ（ノート配信/保存・SQLite）
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    working_dir: /workspace/web
+    init: true
+    volumes:
+      - ..:/workspace:Z
+    env_file:
+      - ../.env
+    ports: ["5000:5000"]
+    # 自走コマンド。web/app.py の app が実装されてから有効に動く
+    command: ["uv", "run", "flask", "--app", "app", "run", "--host", "0.0.0.0", "--port", "5000"]
+    depends_on:
+      - gateway
+
+  litellm:                         # LiteLLM Proxy＝OpenAI互換の窓口（公式イメージ）
+    image: ghcr.io/berriai/litellm:main-latest
+    command: ["--config", "/app/config.yaml"]
+    volumes: ["../litellm_config.yaml:/app/config.yaml:Z"]
+    env_file:
+      - ../.env                    # DATABASE_URL・LITELLM_SALT_KEY もここから渡る
+    ports: ["4000:4000"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4000/health/liveliness')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      db:
+        condition: service_healthy # db の pg_isready が通ってから起動
+
+  db:                              # LiteLLM の台帳（仮想キー・spend）用 Postgres
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=litellm
+      - POSTGRES_DB=litellm        # パスワードだけ ../.env の POSTGRES_PASSWORD から渡す
+    env_file:
+      - ../.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U litellm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:                   # 台帳の永続化（消えると鍵の発行からやり直し）

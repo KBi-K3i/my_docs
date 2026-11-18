@@ -8,7 +8,7 @@
 
 | フォルダ / ファイル | 中身 |
 |---|---|
-| [01_開発環境/](01_開発環境/00_環境構築手順.md) | docker-compose 5サービス（gateway / web / litellm / db / redis）の構築手順と、クラウド LLM（Vertex AI）接続の準備。compose 本体＋dev 上書きの2枚構成・秘密ハンドリング・LiteLLM 設定・疎通確認 |
+| [01_開発環境/](01_開発環境/00_環境構築手順.md) | docker-compose 5サービス（gateway / web / litellm / db / redis）の構築手順と、クラウド LLM（Vertex AI）接続の準備。compose 本体＋dev 上書きの2枚構成・秘密ハンドリング・LiteLLM 設定・疎通確認。**そのまま使える資材一式＝[環境構築キット](01_開発環境/kit/README.md)** |
 | [02_構成図/](02_構成図/00_版管理と差分の見方.md) | システム構成図の版管理（v0 原案 → v1 見直し反映 → v2 DBと管理UIの反映）。v1・v2 には各変更の概念・挙動・理由の解説つき |
 | [03_論点台帳.md](03_論点台帳.md) | ADR（Architecture Decision Record）。論点ごとに選択肢・代償・区分・状態を一覧化した会議用の叩き台 |
 | [04_詳細設計/](04_詳細設計/00_Phase0_歩く骨格.md) | Phase 0「歩く骨格」の詳細設計（端から端まで最小で一本通す） |

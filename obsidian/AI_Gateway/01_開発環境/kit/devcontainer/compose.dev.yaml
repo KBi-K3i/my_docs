@@ -1,0 +1,14 @@
+# 開発用の上書き（DevContainer運用・Redisあり本体に重ねる）
+# gateway/web の自走コマンドを sleep に差し替えて待機させ、exec で入って手動起動する
+# 単独では使わない。必ず本体と2枚で:
+#   docker-compose -f compose.yaml -f compose.dev.yaml up -d --build
+# VS Code の Reopen in Container も devcontainer.json の配列指定でこの2枚を読む
+services:
+  gateway:
+    command: ["sleep", "infinity"]
+    tty: true
+    stdin_open: true
+  web:
+    command: ["sleep", "infinity"]
+    tty: true
+    stdin_open: true

@@ -1,0 +1,20 @@
+# LiteLLM Proxy 設定（モデル定義の正はこのファイル・秘密は .env 参照で直書きしない）
+# 設計の正典: 開発環境構築ドキュメント §5.3・§5.1.4（kit/README.md も参照）
+model_list:
+  - model_name: gemini                      # ゲートウェイが呼ぶ論理名
+    litellm_params:
+      model: vertex_ai/gemini-3.8-flash     # 実モデル（2026-11-16 時点の現行。使用時に公式ドキュメントで再確認）
+      vertex_project: os.environ/VERTEX_PROJECT
+      vertex_location: global               # 現行世代の提供ロケーション（使用時に再確認）
+      # vertex_credentials: /secrets/sa.json  # 鍵JSON を使う場合のみ（ADC なら不要）
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY  # 管理APIの認可キー（.env 参照）
+  # use_redis_transaction_buffer: true       # Redis有効化時にコメントを外す（§5.1.4 の3点セット）
+
+# --- Redis 有効化時にコメントを外す（compose.yaml の redis サービスと対・撤去時は再コメント） ---
+# router_settings:
+#   routing_strategy: simple-shuffle
+#   redis_host: os.environ/REDIS_HOST
+#   redis_port: os.environ/REDIS_PORT
+#   # redis_password: os.environ/REDIS_PASSWORD   # ラボは内部NW専用なので未設定可（本番では必須）
