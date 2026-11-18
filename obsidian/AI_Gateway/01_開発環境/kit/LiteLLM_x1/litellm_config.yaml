@@ -1,12 +1,11 @@
-# LiteLLM Proxy 設定（Redisなし・既定）── 1台版（compose.single.yaml）と各 noredis 版が使う
-# Redisあり版（compose.yaml／deploy/compose.yaml）は litellm_config.redis.yaml を使う＝ファイルで切替（編集不要）
+# LiteLLM Proxy 設定（単機版・Redisなし・この構成はこの1枚のみ）
 model_list:
   - model_name: gemini                      # ゲートウェイが呼ぶ論理名
     litellm_params:
       model: vertex_ai/gemini-3.8-flash     # 実モデル（2026-11-16 時点の現行。使用時に公式ドキュメントで再確認）
       vertex_project: os.environ/VERTEX_PROJECT
       vertex_location: global               # 現行世代の提供ロケーション（使用時に再確認）
-      # vertex_credentials: /secrets/sa.json  # 鍵JSON を使う場合のみ（ADC なら不要）
+      # 認証は GOOGLE_APPLICATION_CREDENTIALS（compose が ADC を指す）に任せる＝鍵JSON不要
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY  # 管理APIの認可キー（.env 参照）

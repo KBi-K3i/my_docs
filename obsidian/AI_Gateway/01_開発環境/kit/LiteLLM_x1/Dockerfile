@@ -35,10 +35,4 @@ ENV UV_LINK_MODE=copy \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# コンテナのシェル設定（エイリアス＋ git ブランチ表示プロンプト）を焼き込む。
-# VS Code はホストの ~/.gitconfig は自動コピーするが ~/.bashrc は持ち込まないため、ここで入れる。
-# ビルドコンテキストは版フォルダのルート（compose の context: ..）なのでパスに .devcontainer/ が付く。
-COPY --chmod=644 .devcontainer/shell-rc.sh /tmp/shell-rc.sh
-RUN cat /tmp/shell-rc.sh >> /etc/bash.bashrc && rm /tmp/shell-rc.sh
-
 WORKDIR /workspace
