@@ -1,0 +1,6 @@
+{
+  // 閲覧キット用ワークスペース設定（設計書＝日本語Markdownの折り返し）
+  "[markdown]": {
+    "editor.wordWrap": "on"
+  }
+}

@@ -8,13 +8,7 @@
 
 拡張機能を勧める公式の仕組みは **`.vscode/extensions.json`（ワークスペース推奨拡張）**。リポジトリに同梱しておくと、フォルダを開いた人に「このワークスペースには推奨拡張があります」と通知が出て、**ワンクリックで一括インストール**できる（拡張ビューで `@recommended` と検索しても一覧が出る）。settings.json は「設定」を配る器であって拡張は入らない——**2つの合わせ技**が正解。
 
-| ファイル | 役割 | 配布方法 |
-|---|---|---|
-| `extensions.json` | 閲覧用の推奨拡張（下の4つ） | リポジトリの `.vscode/` に**コミットして同梱**（閲覧者は何もしない） |
-| リポジトリの `settings.json` | Markdown の折り返し等（開発設定と同居・閲覧者に無害） | 同上 |
-| `optional-user-settings.jsonc` | うっかり編集防止（任意・個人設定） | 使いたい閲覧者だけが**自分のユーザー settings.json に貼る** |
-
-開発者の拡張は `.devcontainer/devcontainer.json` 側で（コンテナ内に）自動導入されるので、この推奨リストは**閲覧の最小4つ**に絞ってある：
+推奨リストは閲覧の最小4つ：
 
 | 拡張ID | なぜ閲覧に要るか |
 |---|---|
@@ -23,19 +17,46 @@
 | `DavidAnson.vscode-markdownlint` | Markdown を少し編集する人向けの記法チェック |
 | `mhutchie.git-graph` | ブランチ・履歴をグラフで眺める（読む人の「いつ変わった？」に効く） |
 
-## 閲覧者の手順（実質2ステップ）
+## 本命の形 ── 独立「閲覧キット」リポジトリ＋対象リポジトリの develop を subtree で内蔵
 
-develop ブランチだけを取得して開く：
+閲覧専用の小さなリポジトリを1つ作り、そこに **対象リポジトリの develop ブランチを `git subtree` で取り込む**。subtree は相手の内容を**このリポジトリの中身としてコピーで抱える**ので、閲覧者は**素の `git clone` 1回で全部入り**——追加の操作もフラグも要らない（ここが submodule との決定的な違い）。
 
-```bash
-git clone -b develop --single-branch <リポジトリURL>
+```
+viewer-kit/                     ← 閲覧キットリポジトリ（職場の Git ホスティングに作る）
+├─ .vscode/
+│  ├─ extensions.json           ← このフォルダの同名ファイルをコピー
+│  └─ settings.json             ← 同上（Markdown折り返し）
+├─ README.md                    ← 閲覧者向けの一言（下の2行だけ書けば足りる）
+└─ repo/                        ← 対象リポジトリの develop が丸ごと入る（subtree）
 ```
 
+**管理者（あなた）の作業**——キットリポジトリの直下で、初回に1回：
+
 ```bash
-code <クローンしたフォルダ>
+git subtree add --prefix=repo <対象リポジトリURL> develop --squash
 ```
 
-右下に出る「**推奨拡張機能をインストールしますか？**」で Install を押す（通知を逃したら拡張ビューで `@recommended`）。以上——Markdown は `Ctrl+Shift+V`（プレビュー）で、Mermaid の構成図も描画される。
+対象の develop が進んだら取り直す（随時）：
+
+```bash
+git subtree pull --prefix=repo <対象リポジトリURL> develop --squash
+```
+
+`--squash` は相手の履歴を1コミットに畳んで取り込む指定＝キット側の履歴が汚れない（`git subtree -h`／`man git-subtree` で実機確認済み・git 2.43）。
+
+**閲覧者の作業**——これだけ：
+
+```bash
+git clone <閲覧キットのURL>
+```
+
+開く → 右下の「推奨拡張機能をインストールしますか？」で Install → `Ctrl+Shift+V` でプレビュー（Mermaid も描画される）。
+
+> [!NOTE]
+> **submodule との使い分け**：`git submodule add -b develop <URL> repo` でも「別リポジトリの develop を参照」はできるが、閲覧者側に `git clone --recurse-submodules`（または clone 後の `git submodule update --init`）という**忘れがちな一手**が要り、忘れると `repo/` が空に見える。更新を閲覧者自身が `git submodule update --remote` で取れる利点はあるものの、「ほぼ何もせずすぐ使える」が狙いなら **subtree が適役**。鮮度の責任は管理者の `subtree pull` に集まる＝更新時にひと声かける運用とセットで。
+
+> [!NOTE]
+> **簡易版（リポジトリを増やしたくない場合）**：対象リポジトリ自体の `.vscode/` に extensions.json を同梱する形でも、直 clone する閲覧者には同じ体験になる（実体リポジトリには同梱済み）。独立キットが効くのは「複数リポジトリを束ねて見せたい」「開発リポジトリの clone 権限を配りたくない」とき。
 
 ## 任意：うっかり編集防止（optional-user-settings.jsonc）
 
