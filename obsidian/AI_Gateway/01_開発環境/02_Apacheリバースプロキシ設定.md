@@ -23,7 +23,7 @@ flowchart LR
     end
 ```
 
-Lima の定義は同じリポジトリに同居する [lima_template の Rocky-Podman](../../lima_template/Rocky-Podman/rocky-podman.yaml) がベース（既定の `portForwards:` は 8080→8080／8443→8443＝コンテナ httpd 練習用）。ホスト httpd で使うときは、その2組を次へ**差し替える**（変更後は VM を作り直すか `limactl edit` で反映）：
+Lima の定義は [lima_template リポジトリ](https://github.com/KBi-K3i/lima_template)の `Rocky-Podman/rocky-podman.yaml` がベース（既定の `portForwards:` は 8080→8080／8443→8443＝コンテナ httpd 練習用。ローカルではこのドキュメント群の隣 `obsidian/lima_template/` にクローンを同居させている＝git 的には別リポジトリ）。ホスト httpd で使うときは、その2組を次へ**差し替える**（変更後は VM を作り直すか `limactl edit` で反映）：
 
 ```yaml
 portForwards:
@@ -182,7 +182,7 @@ sudo sh -c 'echo "127.0.0.1 aigw.local" >> /etc/hosts'
 sudo bash setup-apache.sh aigw.local http://127.0.0.1:8000
 ```
 
-引数は ServerName と上流 URL（省略時はこの既定値）。さらに進めるなら、**Lima の provision（`mode: system`）にこのスクリプトを組み込む**と「VM を作った時点で前段も出来ている」まで自動化できる（[rocky-podman.yaml](../../lima_template/Rocky-Podman/rocky-podman.yaml) の provision に貼り込むか、リポジトリから取得して実行する形）。
+引数は ServerName と上流 URL（省略時はこの既定値）。さらに進めるなら、**Lima の provision（`mode: system`）にこのスクリプトを組み込む**と「VM を作った時点で前段も出来ている」まで自動化できる（[lima_template](https://github.com/KBi-K3i/lima_template) の `rocky-podman.yaml` の provision に貼り込むか、リポジトリから取得して実行する形）。
 
 > [!NOTE]
 > **DevContainer では自動化できない（層が違う）**
