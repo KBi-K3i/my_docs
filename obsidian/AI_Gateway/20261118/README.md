@@ -1,7 +1,7 @@
 # ai_gateway ── litellm×2＋Redis 構成（動作確認済み・2026-11-18）
 
 ブラウザ → web(Flask:5000) ／ gateway(FastAPI:8000) → litellm-lb(nginx:4000) → litellm-1 / litellm-2 → LLMプロバイダ（既定: Vertex AI）。
-litellm は db(Postgres=台帳) と redis(状態共有・spendバッファ) を使う。全6サービス＋認証補助ワンショット1つ。
+litellm は db(Postgres=台帳) と redis(状態共有・spendバッファ) を使う。全7サービス（litellm×2 を含む）＋認証補助ワンショット1つ。
 
 ## 設計方針（プロバイダ入れ替え可能）
 
@@ -20,12 +20,13 @@ litellm は db(Postgres=台帳) と redis(状態共有・spendバッファ) を�
 | `.devcontainer/compose.dev.yaml` | 開発上書き（gateway/web を sleep 待機にする） |
 | `.devcontainer/Dockerfile` | gateway/web 用イメージ（Python3.12＋uv） |
 | `.devcontainer/devcontainer.json` | VS Code の Reopen in Container 用 |
+| `.devcontainer/shell-rc.sh` | コンテナ内シェル設定（エイリアス・プロンプト。Dockerfile が `/etc/bash.bashrc` へ追記） |
 | `litellm_config.yaml` | LiteLLM 設定（Redis有効版・この1枚のみ） |
 | `litellm_lb.conf` | nginx の振り分け定義（litellm-1/-2） |
-| `.env` / `.env.example` | 全キーに初期値入り（設定もれ防止。実値が要るのはプロバイダ節だけ） |
+| `.env.example` | 全キーに初期値入りの雛形（これを写して `.env` を作る＝設定もれ防止。実値が要るのはプロバイダ節だけ。`.env` 自体はコミットせずスナップショットにも含めない） |
 | `secrets/` | 認証ファイルの置き場（コミットしない。litellm が読み取り専用で参照） |
 | `src/ai_api_gateway/main.py` | gateway 仮実装（LiteLLM へ中継・学習で書き換える前提） |
-| `web/app.py` | web 仮実装（最小のリクエスト画面・AIボタン＝gateway を fetch） |
+| `web/` | web 仮実装（最小のリクエスト画面・AIボタン＝gateway を fetch）。4ファイル分割＝`app.py`（配信）・`templates/index.html`（構造）・`static/style.css`（見た目）・`static/app.js`（挙動） |
 
 ## 起動
 

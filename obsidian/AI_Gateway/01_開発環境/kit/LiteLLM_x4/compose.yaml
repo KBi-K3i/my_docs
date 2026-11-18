@@ -111,7 +111,7 @@ services:
       timeout: 3s
       retries: 5
 
-  gcloud:                          # 【任意の補助】鍵JSONを用意できない場合に ADC を作るワンショット（常駐しない）
+  gcloud:                          # 【任意の補助・Vertex AI 専用】鍵JSONを用意できない場合に ADC を作るワンショット（常駐しない・消しても本体無影響）
     image: gcr.io/google.com/cloudsdktool/google-cloud-cli:stable
     profiles: ["auth"]             # 通常の up では起動しない。使い方: docker compose run --rm gcloud
     volumes:

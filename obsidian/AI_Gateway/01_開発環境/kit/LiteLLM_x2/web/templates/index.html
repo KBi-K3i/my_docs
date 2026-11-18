@@ -1,0 +1,29 @@
+<!doctype html>
+<!-- テスト画面の「構造」＝何がどこに置かれるか（見た目は style.css・挙動は app.js） -->
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <title>web (stub)</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <h1>web（仮実装・テスト画面）</h1>
+  <p>下のボタンがゲートウェイ <code>http://localhost:8000/api/chat</code> を直接 fetch します。</p>
+
+  <textarea id="msg">こんにちは。1文で自己紹介して。</textarea>
+
+  <p>
+    <label>同時リクエスト数 <input id="conc" type="number" value="1" min="1" max="100"></label>
+    <button id="send">AIに送る</button>
+  </p>
+
+  <table>
+    <tr><th>リクエスト送信</th><td id="t-sent">−</td></tr>
+    <tr><th>レスポンス受信（最後の応答）</th><td id="t-recv">−</td></tr>
+    <tr><th>所要時間（全体）</th><td id="t-dur">−</td></tr>
+  </table>
+
+  <pre id="out">（ここに応答が出る）</pre>
+</body>
+</html>
