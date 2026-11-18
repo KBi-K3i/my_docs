@@ -44,6 +44,13 @@ git subtree pull --prefix=repo <対象リポジトリURL> develop --squash
 
 `--squash` は相手の履歴を1コミットに畳んで取り込む指定＝キット側の履歴が汚れない（`git subtree -h`／`man git-subtree` で実機確認済み・git 2.43）。
 
+> [!NOTE]
+> **「subtree のファイル化」について**：subtree は取り込んだ時点で相手の中身が**キットの通常ファイルとしてコミット**される＝それ自体がファイル化で、閲覧者は clone だけで取得できる。ただし「どこから・どのブランチを」という**取り込み定義**には submodule の `.gitmodules` のような宣言ファイルが**無い**。そこで定義を [`update-repo.sh`](update-repo.sh) としてスクリプト同梱した——URL・ブランチ・取り込み先を変数で持ち、`repo/` が無ければ `subtree add`・あれば `subtree pull` に自動で振り分ける（冪等）。管理者の更新作業はこれ1発：
+
+```bash
+bash update-repo.sh
+```
+
 **閲覧者の作業**——これだけ：
 
 ```bash
