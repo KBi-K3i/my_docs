@@ -1,0 +1,10 @@
+{
+  // ワークスペース推奨拡張（主に「閲覧者」向け＝clone して開くと一括インストールを提案される）
+  // 開発者の拡張は .devcontainer/devcontainer.json 側で自動導入されるので、ここは閲覧の最小セット
+  "recommendations": [
+    "MS-CEINTL.vscode-language-pack-ja",
+    "bierner.markdown-mermaid",
+    "DavidAnson.vscode-markdownlint",
+    "mhutchie.git-graph"
+  ]
+}

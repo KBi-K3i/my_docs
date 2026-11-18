@@ -50,6 +50,7 @@ docker-compose -f compose.yaml -f compose.dev.yaml up -d --build
 | `repo-root/` の中身 | リポジトリ直下へ（config 2枚・`litellm_lb.conf`＝2台用・`.env.example`） |
 | `deploy/` | リポジトリ直下へフォルダごと（4台版 compose 2枚＋4台用 `litellm_lb.conf`） |
 | `vm/` の中身 | リポジトリ外＝**VM ホストで実行するスクリプト**（`sudo bash` で実行・[Apache設定](../02_Apacheリバースプロキシ設定.md)） |
+| `viewer/` | **閲覧者向け**＝`extensions.json` をリポジトリの `.vscode/` にコミット同梱（clone して開くだけで推奨拡張が入る）。詳細＝[viewer/README](viewer/README.md) |
 
 パッケージ名は `ai_gateway`（`src/ai_gateway/`）を仮置きしている。実プロジェクトの名前に合わせて compose の `command:` を読み替える。
 

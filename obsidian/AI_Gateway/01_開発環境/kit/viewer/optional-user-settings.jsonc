@@ -1,0 +1,12 @@
+// 任意：うっかり編集防止（閲覧者の「ユーザー settings.json」に貼る個人設定）
+// リポジトリの .vscode/settings.json には入れないこと＝開発者まで読み取り専用になる
+// 仕組み: files.readonlyInclude / files.readonlyExclude（VS Code 1.79 で追加）
+// 効果: すべて読み取り専用にしたうえで、Markdown だけ編集可に戻す
+{
+  "files.readonlyInclude": {
+    "**/*": true
+  },
+  "files.readonlyExclude": {
+    "**/*.md": true
+  }
+}
